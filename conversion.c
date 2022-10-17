@@ -49,3 +49,4 @@ char *convert_base(unsigned long nb, unsigned int base, int upper)
 	}
 	return (str);
 }
+
