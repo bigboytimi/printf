@@ -44,7 +44,7 @@ int (*get_func(const char c))(va_list)
  * _printf - produce output according to format
  *
  * @format: format string
- * 
+ *
  * Return: Number of characters printed
  */
 
@@ -86,5 +86,5 @@ int _printf(const char *format, ...)
 		}
 	}
 	va_end(ap);
-	return(len);
+	return (len);
 }
