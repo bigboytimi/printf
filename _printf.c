@@ -37,7 +37,7 @@ int (*get_func(const char c))(va_list)
 		}
 		i++;
 	}
-	return (0);
+	return (NULL);
 }
 
 /**
