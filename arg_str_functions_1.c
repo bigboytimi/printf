@@ -4,7 +4,6 @@
 
 /**
  * print_percent - print percent character
- *
  * @args: char
  * Return: print percent char
  */
