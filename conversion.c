@@ -49,9 +49,7 @@ char *convert_base(unsigned long nb, unsigned int base, int upper)
 	}
 	return (str);
 }
-<<<<<<< HEAD
 
-=======
 /**
  * convert_base_pointer - convert pointer void to ul
  * @p: pointer
@@ -99,4 +97,3 @@ char *convert_rot13(char *str)
 	s[i] = '\0';
 	return (s);
 }
->>>>>>> 7126670de76e4b3ec7b8c6bee9db3e470ca1079d
