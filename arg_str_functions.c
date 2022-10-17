@@ -43,6 +43,12 @@ int print_str(va_list ap)
 	return (_puts(argument, 0));
 }
 
+/**
+ * print_str_unprintable - unprint some characters
+ * @ap: arg list
+ * Return: number of printed char
+ */
+
 int print_str_unprintable(va_list ap)
 {
 	char *argument = va_arg(ap, char *);
