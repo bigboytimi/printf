@@ -1,168 +1,131 @@
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "main.h"
 
-unsigned int convert_di(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len);
-unsigned int convert_b(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len);
-unsigned int convert_u(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len);
-unsigned int convert_o(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len);
-
 /**
- * convert_di - Converts an argument to a signed int and
- *              stores it to a buffer contained in a struct.
- * @args: A va_list pointing to the argument to be converted.
- * @flags: Flag modifiers.
- * @wid: A width modifier.
- * @prec: A precision modifier.
- * @len: A length modifier.
- * @output: A buffer_t struct containing a character array.
- *
- * Return: The number of bytes stored to the buffer.
+ * print_unsigned_number - print unsigned number
+ * @n: unsigned int to print
+ * Return: number of printed chars
  */
-unsigned int convert_di(va_list args, buffer_t *output, unsigned char flags,
-		int wid, int prec, unsigned char len)
+
+int print_unsigned_number(unsigned int n)
 {
-	long int d, copy;
-	unsigned int ret = 0, count = 0;
-	char pad, space = ' ', neg = '-', plus = '+';
+	int count = 0;
+	unsigned int nb = n;
 
-	if (len == LONG)
-		d = va_arg(args, long int);
-	else
-		d = va_arg(args, int);
-	if (len == SHORT)
-		d = (short)d;
-
-	/* Handle space flag */
-	if (SPACE_FLAG == 1 && d >= 0)
-		ret += _memcpy(output, &space, 1);
-
-	if (prec <= 0 && NEG_FLAG == 0) /* Handle width  */
+	if (nb <= 9)
 	{
-		if (d == LONG_MIN)
-			count += 19;
-		else
-		{
-			for (copy = (d < 0) ? -d : d; copy > 0; copy /= 10)
-				count++;
-		}
-		count += (d == 0) ? 1 : 0;
-		count += (d < 0) ? 1 : 0;
-		count += (PLUS_FLAG == 1 && d >= 0) ? 1 : 0;
-		count += (SPACE_FLAG == 1 && d >= 0) ? 1 : 0;
-
-		/* Handle plus flag when zero flag is active */
-		if (ZERO_FLAG == 1 && PLUS_FLAG == 1 && d >= 0)
-			ret += _memcpy(output, &plus, 1);
-		/*Print negative sign when zero flag is active */
-		if (ZERO_FLAG == 1 && d < 0)
-			ret += _memcpy(output, &neg, 1);
-		pad = (ZERO_FLAG == 1) ? '0' : ' ';
-		for (wid -= count; wid > 0; wid--)
-			ret += _memcpy(output, &pad, 1);
+		_putchar(nb + '0');
+		return (1);
 	}
-	/* Print negative sign when zero flag is not active */
-	if (ZERO_FLAG == 0 && d < 0)
-		ret += _memcpy(output, &neg, 1);
-	if (ZERO_FLAG == 0 && (PLUS_FLAG == 1 && d >= 0))
-		ret += _memcpy(output, &plus, 1);
-	if (!(d == 0 && prec == 0))
-		ret += convert_sbase(output, d, "0123456789", flags, 0, prec);
-	ret += print_neg_width(output, ret, flags, wid);
-	return (ret);
-}
-/**
- * convert_b - Converts an unsigned int argument to binary
- *             and stores it to a buffer contained in a struct.
- * @args: A va_list pointing to the argument to be converted.
- * @flags: Flag modifiers.
- * @wid: A width modifier.
- * @prec: A precision modifier.
- * @len: A length modifier.
- * @output: A buffer_t struct containing a character array.
- * Return: The number of bytes stored to the buffer.
- */
-unsigned int convert_b(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len)
-{
-	unsigned int num;
-
-	num = va_arg(args, unsigned int);
-
-	(void)len;
-
-	return (convert_ubase(output, num, "01", flags, wid, prec));
-}
-/**
- * convert_o - Converts an unsigned int to octal and
- *             stores it to a buffer contained in a struct.
- * @args: A va_list poinitng to the argument to be converted.
- * @flags: Flag modifiers.
- * @wid: A width modifier.
- * @prec: A precision modifier.
- * @len: A length modifier.
- * @output: A buffer_t struct containing a character array.
- *
- * Return: The number of bytes stored to the buffer.
- */
-unsigned int convert_o(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len)
-{
-	unsigned long int num;
-	unsigned int ret = 0;
-	char zero = '0';
-
-	if (len == LONG)
-		num = va_arg(args, unsigned long int);
-	else
-		num = va_arg(args, unsigned int);
-	if (len == SHORT)
-		num = (unsigned short)num;
-
-	if (HASH_FLAG == 1 && num != 0)
-		ret += _memcpy(output, &zero, 1);
-
-	if (!(num == 0 && prec == 0))
-		ret += convert_ubase(output, num, "01234567",
-				flags, wid, prec);
-
-	ret += print_neg_width(output, ret, flags, wid);
-
-	return (ret);
+	if (nb > 9)
+	{
+		count = print_unsigned_number(nb / 10) + 1;
+		_putchar(nb % 10 + '0');
+		return (count);
+	}
+	return (0);
 }
 
 /**
- * convert_u - Converts an unsigned int argument to decimal and
- *               stores it to a buffer contained in a struct.
- * @args: A va_list pointing to the argument to be converted.
- * @flags: Flag modifiers.
- * @wid: A width modifier.
- * @prec: A precision modifier.
- * @len: A length modifier.
- * @output: A buffer_t struct containing a character array.
- *
- * Return: The number of bytes stored to the buffer.
+ * print_number - display the number contained in an int
+ * @n: int to print
+ * Return: number of char
  */
-unsigned int convert_u(va_list args, buffer_t *output,
-		unsigned char flags, int wid, int prec, unsigned char len)
+int print_number(int n)
 {
-	unsigned long int num;
-	unsigned int ret = 0;
+	unsigned int nb;
+	int count = 0;
 
-	if (len == LONG)
-		num = va_arg(args, unsigned long int);
-	else
-		num = va_arg(args, unsigned int);
-	if (len == SHORT)
-		num = (unsigned short)num;
+	nb = n;
+	if (n < 0)
+	{
+		_putchar('-');
+		count++;
+		nb = -nb;
+	}
+	if (nb <= 9)
+	{
+		count += _putchar(nb + '0');
+		return (count);
+	}
+	if (nb > 9)
+	{
+		count += print_number(nb / 10) + 1;
+		_putchar(nb % 10 + '0');
+		return (count);
+	}
+	return (0);
+}
+/**
+ * _nbr_len - length of a number
+ * @prmNumber: number
+ * Return: length of the number
+ */
 
-	if (!(num == 0 && prec == 0))
-		ret += convert_ubase(output, num, "0123456789",
-				flags, wid, prec);
+int _nbr_len(int prmNumber)
+{
+	int cLoop = 0, number;
 
-	ret += print_neg_width(output, ret, flags, wid);
+	if (prmNumber == 0)
+		return (1);
 
-	return (ret);
+	number = prmNumber;
+
+	if (number < 0)
+	{
+		number *= -1;
+		cLoop++;	/* for the sign char */
+	}
+
+	while (number)
+	{
+		number /= 10;
+		cLoop++;
+	}
+
+	return (cLoop);
+}
+
+/**
+ * _itoa - Convert an int to a string
+ * @prmNumber: int to convert
+ * Return: converted string
+ */
+
+char *_itoa(int prmNumber)
+{
+	char *s;
+	int cLoop;
+	long number;
+
+	number = prmNumber;
+	cLoop = _nbr_len(number);
+	s = malloc(sizeof(char) * cLoop + 1);
+
+	if (s == NULL)
+	{
+		return (NULL);
+	}
+
+	s[cLoop] = '\0';
+
+	if (number == 0)
+	{
+		s = "0";
+	}
+	else if (number < 0)
+	{
+		s[0] = '-';
+		number *= -1;
+	}
+
+	while (number)
+	{
+		s[--cLoop] = number % 10 + 48;
+		number /= 10;
+	}
+
+	return (s);
 }
