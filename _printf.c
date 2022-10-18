@@ -22,7 +22,6 @@ void cleanup(va_list args, buffer_t *output)
  * @format: Character string to print - may contain directives.
  * @output: A buffer_t struct containing a buffer.
  * @args: A list of arguments.
- *
  * Return: Integer.
  */
 
@@ -31,6 +30,11 @@ int run_printf(const char *format, va_list args, buffer_t *output)
 	int i, wid, prec, ret = 0;
 	char tmp;
 	unsigned char flags, len;
+	/**
+	 * int - function pointer
+	 * @f: pointer to function
+	 * Return: int
+	 */
 	unsigned int (*f)(va_list, buffer_t *,
 			unsigned char, int, int, unsigned char);
 
