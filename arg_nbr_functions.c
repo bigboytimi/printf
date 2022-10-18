@@ -1,90 +1,100 @@
 #include "main.h"
-#include <stdarg.h>
-#include <stdlib.h>
+
+unsigned int convert_c(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
+unsigned int convert_percent(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
+unsigned int convert_p(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
 
 /**
- * print_nbr - print number
- * @ap: arg list
- * Return: number of printed char
+ * convert_c - Converts an argument to an unsigned char and
+ *             stores it to a buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer.
  */
-
-int print_nbr(va_list ap)
+unsigned int convert_c(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
 {
-	return (print_number(va_arg(ap, int)));
+	char c;
+	unsigned int ret = 0;
+
+	(void)prec;
+	(void)len;
+
+	c = va_arg(args, int);
+
+	ret += print_width(output, ret, flags, wid);
+	ret += _memcpy(output, &c, 1);
+	ret += print_neg_width(output, ret, flags, wid);
+
+	return (ret);
 }
 
 /**
- * print_binary - print number binary base
- * @ap: arg list
- * Return: number of printed char
+ * convert_percent - Stores a percent sign to a
+ *                   buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer (always 1).
  */
-
-int print_binary(va_list ap)
+unsigned int convert_percent(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
 {
-	char *str;
-	int sum = 0;
-	unsigned int argument = va_arg(ap, unsigned int);
+	char percent = '%';
+	unsigned int ret = 0;
 
-	if (!argument)
-	{
-		sum += _puts("0", 0);
-		return (sum);
-	}
-	str = convert_base(argument, 2, 0);
-	if (!str)
-		return (0);
-	sum = _puts(str, 0);
-	free(str);
-	return (sum);
+	(void)args;
+	(void)prec;
+	(void)len;
+
+	ret += print_width(output, ret, flags, wid);
+	ret += _memcpy(output, &percent, 1);
+	ret += print_neg_width(output, ret, flags, wid);
+
+	return (ret);
 }
 
 /**
- * print_octal - print number octal base
- * @ap: arg list
- * Return: number of printed char
+ * convert_p - Converts the address of an argument to hex and
+ *             stores it to a buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer.
  */
-
-int print_octal(va_list ap)
+unsigned int convert_p(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
 {
-	char *str;
-	int sum;
+	char *null = "(nil)";
+	unsigned long int address;
+	unsigned int ret = 0;
 
-	str = convert_base(va_arg(ap, unsigned int), 8, 0);
-	sum = _puts(str, 0);
-	free(str);
-	return (sum);
-}
+	(void)len;
 
-/**
- * print_hexa_lower - print hexa lower
- * @ap: arg list
- * Return: number of printed char
- */
+	address = va_arg(args, unsigned long int);
+	if (address == '\0')
+		return (_memcpy(output, null, 5));
 
-int print_hexa_lower(va_list ap)
-{
-	char *str;
-	int sum;
+	flags |= 32;
+	ret += convert_ubase(output, address, "0123456789abcdef",
+			flags, wid, prec);
+	ret += print_neg_width(output, ret, flags, wid);
 
-	str = convert_base(va_arg(ap, unsigned int), 16, 0);
-	sum = _puts(str, 0);
-	free(str);
-	return (sum);
-}
-
-/**
- * print_hexa_upper - print hexa upper
- * @ap: arg list
- * Return: number of printed char
- */
-
-int print_hexa_upper(va_list ap)
-{
-	char *str;
-	int sum;
-
-	str = convert_base(va_arg(ap, unsigned int), 16, 1);
-	sum = _puts(str, 0);
-	free(str);
-	return (sum);
+	return (ret);
 }

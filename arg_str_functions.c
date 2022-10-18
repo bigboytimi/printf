@@ -1,136 +1,82 @@
-#include <stdio.h>
 #include "main.h"
-#include <stdlib.h>
-#include <unistd.h>
+
+unsigned int convert_x(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
+unsigned int convert_X(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
 
 /**
- * print_char - print single char
- * @ap: arg list
- * Return: number of printed char
- */
-
-int print_char(va_list ap)
-{
-	char c = va_arg(ap, int);
-
-	if (c == '\0')
-	{
-		return (write(1, &c, 1));
-	}
-	_putchar(c);
-	return (1);
-}
-
-/**
- * print_str - print string
+ * convert_x - Converts an unsigned int argument to hex using abcdef
+ *             and stores it to a buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
  *
- * @ap: arg list
+ * Return: The number of bytes stored to the buffer.
+ */
+unsigned int convert_x(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
+{
+	unsigned long int num;
+	unsigned int ret = 0;
+	char *lead = "0x";
+
+	if (len == LONG)
+		num = va_arg(args, unsigned long int);
+	else
+		num = va_arg(args, unsigned int);
+	if (len == SHORT)
+		num = (unsigned short)num;
+
+	if (HASH_FLAG == 1 && num != 0)
+		ret += _memcpy(output, lead, 2);
+
+	if (!(num == 0 && prec == 0))
+		ret += convert_ubase(output, num, "0123456789abcdef",
+				flags, wid, prec);
+
+	ret += print_neg_width(output, ret, flags, wid);
+
+	return (ret);
+}
+
+/**
+ * convert_X - Converts an unsigned int argument to hex using ABCDEF
+ *             and stores it to a buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
  *
- * Return: number of printed char
+ * Return: The number of bytes stored to the buffer.
  */
-
-int print_str(va_list ap)
+unsigned int convert_X(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
 {
-	char *argument = va_arg(ap, char *);
-	int sum = 0;
+	unsigned long int num;
+	unsigned int ret = 0;
+	char *lead = "0X";
 
-	if (!argument)
-	{
-		sum += _puts("(null)", 0);
-		return (sum);
-	}
+	if (len == LONG)
+		num = va_arg(args, unsigned long);
+	else
+		num = va_arg(args, unsigned int);
+	if (len == SHORT)
+		num = (unsigned short)num;
 
-	return (_puts(argument, 0));
-}
+	if (HASH_FLAG == 1 && num != 0)
+		ret += _memcpy(output, lead, 2);
 
-/**
- * print_str_unprintable - unprint some characters
- * @ap: arg list
- * Return: number of printed char
- */
+	if (!(num == 0 && prec == 0))
+		ret += convert_ubase(output, num, "0123456789ABCDEF",
+				flags, wid, prec);
 
-int print_str_unprintable(va_list ap)
-{
-	char *argument = va_arg(ap, char *);
-	int sum = 0;
+	ret += print_neg_width(output, ret, flags, wid);
 
-	if (!argument)
-	{
-		sum += _puts("(null)", 0);
-		return (sum);
-	}
-
-	return (_puts(argument, 1));
-}
-
-/**
- * print_str_reverse - reverse a string
- * @ap: arg list
- * Return: number printed char
- */
-int print_str_reverse(va_list ap)
-{
-	char *argument = va_arg(ap, char *), *str;
-	int size, left, limit, right, sum = 0;
-
-	if (!argument)
-	{
-		sum += _puts("%r", 0);
-		return (sum);
-	}
-
-	size = _strlen_recursion(argument);
-	right = size - 1;
-	limit = (size % 2 == 0) ? (size + 1) / 2 : (size / 2);
-
-	str = malloc(sizeof(char) * size + 1);
-
-	if (str == NULL)
-	{
-		return (0);
-	}
-
-	if (size % 2 != 0)
-	{
-		str[limit] = argument[limit];
-	}
-
-	for (left = 0; left < limit; left++)
-	{
-		str[left] = argument[right];
-		str[right] = argument[left];
-		right--;
-	}
-
-	str[size] = '\0';
-
-	sum = _puts(str, 0);
-	free(str);
-
-	return (sum);
-}
-
-/**
- * print_rot13 - print string with rot13
- * @ap: arg list
- * Return: number of printed char
- */
-
-int print_rot13(va_list ap)
-{
-	int sum = 0;
-	char *str, *argument = va_arg(ap, char*);
-
-	if (!argument)
-	{
-		sum += _puts("%R", 0);
-		return (sum);
-	}
-
-	str = convert_rot13(argument);
-	if (!str)
-		return (0);
-	sum = _puts(str, 0);
-	free(str);
-	return (sum);
+	return (ret);
 }

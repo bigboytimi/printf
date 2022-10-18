@@ -1,99 +1,103 @@
-#include <stdlib.h>
 #include "main.h"
 
-/**
- * convert_alpha_numeric - convert digits to char
- * @nb: digit or number
- * @upper: upper case check
- * Return: converted value
- */
+unsigned int convert_sbase(buffer_t *output, long int num, char *base,
+		unsigned char flags, int wid, int prec);
+unsigned int convert_ubase(buffer_t *output,
+		unsigned long int num, char *base,
+		unsigned char flags, int wid, int prec);
 
-int convert_alpha_numeric(int nb, int upper)
+/**
+ * convert_sbase - Converts a signed long to an inputted base and stores
+ *                 the result to a buffer contained in a struct.
+ * @output: A buffer_t struct containing a character array.
+ * @num: A signed long to be converted.
+ * @base: A pointer to a string containing the base to convert to.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ *
+ * Return: The number of bytes stored to the buffer.
+ */
+unsigned int convert_sbase(buffer_t *output, long int num, char *base,
+		unsigned char flags, int wid, int prec)
 {
-	if (nb >= 10)
-		return (nb - 10 + ((upper) ? 'A' : 'a'));
+	int size;
+	char digit, pad = '0';
+	unsigned int ret = 1;
+
+	for (size = 0; *(base + size);)
+		size++;
+
+	if (num >= size || num <= -size)
+		ret += convert_sbase(output, num / size, base,
+				flags, wid - 1, prec - 1);
+
 	else
-		return (nb + '0');
+	{
+		for (; prec > 1; prec--, wid--) /* Handle precision */
+			ret += _memcpy(output, &pad, 1);
+
+		if (NEG_FLAG == 0) /* Handle width */
+		{
+			pad = (ZERO_FLAG == 1) ? '0' : ' ';
+			for (; wid > 1; wid--)
+				ret += _memcpy(output, &pad, 1);
+		}
+	}
+
+	digit = base[(num < 0 ? -1 : 1) * (num % size)];
+	_memcpy(output, &digit, 1);
+
+	return (ret);
 }
 
 /**
- * convert_base - convert unsigned from base 10 to base
- * @nb: decimal number
- * @base: base to convert from
- * @upper: upper case check
- * Return: converted number to string
+ * convert_ubase - Converts an unsigned long to an inputted base and
+ *                 stores the result to a buffer contained in a struct.
+ * @output: A buffer_t struct containing a character array.
+ * @num: An unsigned long to be converted.
+ * @base: A pointer to a string containing the base to convert to.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ *
+ * Return: The number of bytes stored to the buffer.
  */
-
-char *convert_base(unsigned long nb, unsigned int base, int upper)
+unsigned int convert_ubase(buffer_t *output, unsigned long int num, char *base,
+		unsigned char flags, int wid, int prec)
 {
-	int i = 0;
-	char *str;
-	unsigned long nbr = nb;
+	unsigned int size, ret = 1;
+	char digit, pad = '0', *lead = "0x";
 
-	while (nbr >= base)
+	for (size = 0; *(base + size);)
+		size++;
+
+	if (num >= size)
+		ret += convert_ubase(output, num / size, base,
+				flags, wid - 1, prec - 1);
+
+	else
 	{
-		nbr /= base;
-		i++;
+		if (((flags >> 5) & 1) == 1) /* Printing a ptr address */
+		{
+			wid -= 2;
+			prec -= 2;
+		}
+		for (; prec > 1; prec--, wid--) /* Handle precision */
+			ret += _memcpy(output, &pad, 1);
+
+		if (NEG_FLAG == 0) /* Handle width */
+		{
+			pad = (ZERO_FLAG == 1) ? '0' : ' ';
+			for (; wid > 1; wid--)
+				ret += _memcpy(output, &pad, 1);
+		}
+		if (((flags >> 5) & 1) == 1) /* Print 0x for ptr address */
+			ret += _memcpy(output, lead, 2);
 	}
-	str = malloc(sizeof(char) * i + 2);
-	if (!str)
-		return (0);
-	str[i + 1] = '\0';
 
-	while (i >= 0)
-	{
-		nbr = nb % base;
-		str[i] = convert_alpha_numeric(nbr, upper);
-		nb /= base;
-		i--;
-	}
-	return (str);
-}
+	digit = base[(num % size)];
+	_memcpy(output, &digit, 1);
 
-/**
- * convert_base_pointer - convert pointer void to ul
- * @p: pointer
- * Return: converted string
- */
-
-char *convert_base_pointer(unsigned long p)
-{
-	unsigned long adress;
-	char *str;
-
-	adress = p;
-	if (adress == 0)
-		return ("0");
-	str = convert_base(adress, 16, 0);
-	return (str);
-}
-/**
- * convert_rot13 - encode using rot13
- * @str: string to encode
- * Return: encoded string
- */
-
-char *convert_rot13(char *str)
-{
-	int i = 0;
-	char *s;
-	int size = _strlen_recursion(str);
-
-	s = malloc(sizeof(char) * size + 1);
-	if (!s)
-		return (0);
-
-	while (str[i])
-	{
-		if ((str[i] >= 'a' && str[i] <= 'm') || (str[i] >= 'A' && str[i] <= 'M'))
-			s[i] = str[i] + 13;
-		else if ((str[i] >= 'n' && str[i] <= 'z')
-				|| (str[i] >= 'N' && str[i] <= 'Z'))
-			s[i] = str[i] - 13;
-		else
-			s[i] = str[i];
-		i++;
-	}
-	s[i] = '\0';
-	return (s);
+	return (ret);
 }

@@ -1,99 +1,203 @@
-#include <unistd.h>
-#include <stdlib.h>
 #include "main.h"
 
-/**
- * _putchar - writes the character c to stdout
- * @c: The character to print
- *
- * Return: On success 1.
- */
-
-int _putchar(char c)
-{
-	return (write(1, &c, 1));
-}
+unsigned int convert_s(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
+unsigned int convert_S(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
+unsigned int convert_r(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
+unsigned int convert_R(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len);
 
 /**
- * _puts - write all char from string to stdout
- * @str: string to print
- * @ascii: enable ascii restriction
- * Return: number of printed char
+ * convert_s - Converts an argument to a string and
+ *             stores it to a buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer.
  */
-
-int _puts(char *str, int ascii)
+unsigned int convert_s(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
 {
-	char *s;
-	int i = 0, sum = 0;
+	char *str, *null = "(null)";
+	int size;
+	unsigned int ret = 0;
 
-	while (str[i])
-	{
-		if (((str[i] >= 0 && str[i] < 32) || str[i] >= 127) && ascii)
-		{
-			s = convert_base(str[i], 16, 1);
-			sum += write(1, "\\x", 2);
-			if (str[i] >= 0 && str[i] < 16)
-				sum += _putchar('0');
-			sum += _puts(s, 0);
-			free(s);
-			i++;
-		}
-		else
-		{
-			sum += _putchar(str[i]);
-			i++;
-		}
-	}
-	return (sum);
-}
-/**
- * _strlen_recursion - return the length of a string
- *
- * @s: char pointer
- *
- * Return: the length of a string
- */
-int _strlen_recursion(char *s)
-{
-	if (*s != '\0')
-	{
-		return (_strlen_recursion(s + 1) + 1);
-	}
-	else
-	{
-		return (0);
-	}
-}
+	(void)flags;
+	(void)len;
 
-/**
- * _strdup - a pointer to a newly allocated space in memory,
- *           which contains a copy of the string given as a parameter.
- *
- * @str: char pointer to copy
- *
- * Return: a new char pointer
- */
-char *_strdup(char *str)
-{
-	char *s;
-	int cLoop;
-
+	str = va_arg(args, char *);
 	if (str == NULL)
+		return (_memcpy(output, null, 6));
+
+	for (size = 0; *(str + size);)
+		size++;
+
+	ret += print_string_width(output, flags, wid, prec, size);
+
+	prec = (prec == -1) ? size : prec;
+	while (*str != '\0' && prec > 0)
 	{
-		return (NULL);
+		ret += _memcpy(output, str, 1);
+		prec--;
+		str++;
 	}
 
-	s = malloc(sizeof(char) * (_strlen_recursion(str) + 1));
+	ret += print_neg_width(output, ret, flags, wid);
 
-	if (s == NULL)
+	return (ret);
+}
+
+/**
+ * convert_S - Converts an argument to a string and
+ *             stores it to a buffer contained in a struct.
+ * @args: A va_list pointing to the argument to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer.
+ *
+ * Description: Non-printable characteres (ASCII values < 32 or >= 127)
+ *              are stored as \x followed by the ASCII code value in hex.
+ */
+unsigned int convert_S(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
+{
+	char *str, *null = "(null)", *hex = "\\x", zero = '0';
+	int size, index;
+	unsigned int ret = 0;
+
+	(void)len;
+	str = va_arg(args, char *);
+	if (str == NULL)
+		return (_memcpy(output, null, 6));
+
+	for (size = 0; str[size];)
+		size++;
+
+	ret += print_string_width(output, flags, wid, prec, size);
+
+	prec = (prec == -1) ? size : prec;
+	for (index = 0; *(str + index) != '\0' && index < prec; index++)
 	{
-		return (NULL);
+		if (*(str + index) < 32 || *(str + index) >= 127)
+		{
+			ret += _memcpy(output, hex, 2);
+			if (*(str + index) < 16)
+				ret += _memcpy(output, &zero, 1);
+			ret += convert_ubase(output, *(str + index),
+						 "0123456789ABCDEF", flags, 0, 0);
+			continue;
+		}
+		ret += _memcpy(output, (str + index), 1);
 	}
 
-	for (cLoop = 0; cLoop < _strlen_recursion(str) + 1; cLoop++)
+	ret += print_neg_width(output, ret, flags, wid);
+
+	return (ret);
+}
+
+/**
+ * convert_r - Reverses a string and stores it
+ *             to a buffer contained in a struct.
+ * @args: A va_list pointing to the string to be reversed.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A length modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer.
+ */
+unsigned int convert_r(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
+{
+	char *str, *null = "(null)";
+	int size, end, i;
+	unsigned int ret = 0;
+
+	(void)flags;
+	(void)len;
+
+	str = va_arg(args, char *);
+	if (str == NULL)
+		return (_memcpy(output, null, 6));
+
+	for (size = 0; *(str + size);)
+		size++;
+
+	ret += print_string_width(output, flags, wid, prec, size);
+
+	end = size - 1;
+	prec = (prec == -1) ? size : prec;
+	for (i = 0; end >= 0 && i < prec; i++)
 	{
-		s[cLoop] = str[cLoop];
+		ret += _memcpy(output, (str + end), 1);
+		end--;
 	}
 
-	return (s);
+	ret += print_neg_width(output, ret, flags, wid);
+
+	return (ret);
+}
+
+/**
+ * convert_R - Converts a string to ROT13 and stores
+ *             it to a buffer contained in a struct.
+ * @args: A va_list pointing to the string to be converted.
+ * @flags: Flag modifiers.
+ * @wid: A width modifier.
+ * @prec: A precision modifier.
+ * @len: A lenth modifier.
+ * @output: A buffer_t struct containing a character array.
+ *
+ * Return: The number of bytes stored to the buffer.
+ */
+unsigned int convert_R(va_list args, buffer_t *output,
+		unsigned char flags, int wid, int prec, unsigned char len)
+{
+	char *alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	char *rot13 = "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM";
+	char *str, *null = "(null)";
+	int i, j, size;
+	unsigned int ret = 0;
+
+	(void)flags;
+	(void)len;
+
+	str = va_arg(args, char *);
+	if (str == NULL)
+		return (_memcpy(output, null, 6));
+
+	for (size = 0; *(str + size);)
+		size++;
+
+	ret += print_string_width(output, flags, wid, prec, size);
+
+	prec = (prec == -1) ? size : prec;
+	for (i = 0; *(str + i) != '\0' && i < prec; i++)
+	{
+		for (j = 0; j < 52; j++)
+		{
+			if (*(str + i) == *(alpha + j))
+			{
+				ret += _memcpy(output, (rot13 + j), 1);
+				break;
+			}
+		}
+		if (j == 52)
+			ret += _memcpy(output, (str + i), 1);
+	}
+
+	ret += print_neg_width(output, ret, flags, wid);
+
+	return (ret);
 }
