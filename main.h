@@ -45,5 +45,4 @@ typedef struct flags_printf
 	int (*f)(va_list);
 } flags_p;
 
-
 #endif
