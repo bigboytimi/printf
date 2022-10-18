@@ -2,6 +2,7 @@
 #define MAIN_H
 
 #include <stdarg.h>
+
 int _printf(const char *format, ...);
 int print_char(va_list ap);
 int print_str(va_list ap);
@@ -39,4 +40,5 @@ typedef struct flags_printf
 	char *c;
 	int (*f)(va_list);
 } flags_p;
+
 #endif
